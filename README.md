@@ -1,4 +1,4 @@
-# Node Body Validation 3.0.0
+# Node Body Validation
 
 The **Node Body Validation** module helps site builders enforce body field validation rules for nodes. It ensures consistency in content entry by restricting length, filtering characters or words, and validating uniqueness across content types.
 
