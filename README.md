@@ -1,4 +1,4 @@
-# Node Body Validation 2.0.0
+# Node Body Validation 3.0.0
 
 The **Node Body Validation** module helps site builders enforce body field validation rules for nodes. It ensures consistency in content entry by restricting length, filtering characters or words, and validating uniqueness across content types.
 
@@ -19,7 +19,7 @@ The **Node Body Validation** module helps site builders enforce body field valid
 
 ## Requirements
 
-* Drupal core: ^10
+* Drupal core: ^10.4 || ^11
 * Dependency: Node module (`drupal:node`)
 
 ## Installation
@@ -39,14 +39,14 @@ The **Node Body Validation** module helps site builders enforce body field valid
 
 ## Configuration
 
-1. Go to **Configuration → Content authoring → Node body validation** (Url **/admin/config/content/node-body-validation** ).
+1. Go to **Configuration → Content authoring → Node body validation**.
 2. For each content type, set:
 
    * Blacklisted characters/words
    * Minimum/maximum characters
    * Minimum/maximum word count
    * Uniqueness rules
-4. Save settings. They will be enforced on node save.
+3. Save settings. They will be enforced on node save.
 
 ## Example Use Cases
 
@@ -54,3 +54,17 @@ The **Node Body Validation** module helps site builders enforce body field valid
 * Ensure blog posts are at least 200 words long.
 * Require each "News" node to have a unique body field to avoid duplicates.
 
+## Changelog
+
+### 3.0.0
+
+* Updated for **Drupal ^10.4 || ^11**.
+* Migrated to **PHP 8 attributes** for constraints.
+* Modernized dependency injection using constructor property promotion.
+* Updated configuration key from `node_body_validation.node_body_validation_settings` to `node_body_validation.settings`.
+* Added strict return types for methods.
+* Added explicit dependency on `drupal:node`.
+
+---
+
+Would you like me to also **embed version and packaging info** (like `version: 3.0.0`, `project: node_body_validation`, `datestamp`) at the bottom of the README, similar to what Drupal.org packaging scripts append?
