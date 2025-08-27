@@ -39,14 +39,14 @@ The **Node Body Validation** module helps site builders enforce body field valid
 
 ## Configuration
 
-1. Go to **Configuration → Content authoring → Node body validation**. **/admin/config/content/node-body-validation**
+1. Go to **Configuration → Content authoring → Node body validation** (Url **/admin/config/content/node-body-validation** ).
 2. For each content type, set:
 
    * Blacklisted characters/words
    * Minimum/maximum characters
    * Minimum/maximum word count
    * Uniqueness rules
-3. Save settings. They will be enforced on node save.
+4. Save settings. They will be enforced on node save.
 
 ## Example Use Cases
 
