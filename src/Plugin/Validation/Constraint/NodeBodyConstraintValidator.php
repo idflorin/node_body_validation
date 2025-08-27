@@ -90,7 +90,7 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
 
     // Check if module config exists.
     $node_body_validation_config = $this->configFactory
-      ->getEditable('node_body_validation.node_body_validation_settings')
+      ->getEditable('node_body_validation.settings')
       ->get('node_body_validation_config');
     if (empty($node_body_validation_config)) {
       return;

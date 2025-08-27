@@ -45,7 +45,7 @@ class NodeBodyValidationAdminForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container) {
+  public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('entity_type.manager'),
       $container->get('config.factory')
@@ -55,16 +55,16 @@ class NodeBodyValidationAdminForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'node_body_validation_admin_form';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     // Get configuration value.
-    $node_body_validation_config = $this->config('node_body_validation.node_body_validation_settings')->get('node_body_validation_config');
+    $node_body_validation_config = $this->config('node_body_validation.settings')->get('node_body_validation_config');
 
     // Get available content types.
     $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
@@ -172,7 +172,7 @@ class NodeBodyValidationAdminForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
 
     // Get available content types.
     $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
@@ -204,7 +204,7 @@ class NodeBodyValidationAdminForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $values = [];
     // Get available content types.
     $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
@@ -221,7 +221,7 @@ class NodeBodyValidationAdminForm extends FormBase {
     $values['unique'] = $form_state->getValue(['unique']);
 
     // Set node_body_validation_config variable.
-    $this->configFactory->getEditable('node_body_validation.node_body_validation_settings')
+    $this->configFactory->getEditable('node_body_validation.settings')
       ->set('node_body_validation_config', $values)
       ->save();
 

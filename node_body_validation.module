@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 /**
  * Implements hook_help().
  */
-function node_body_validation_help($section) {
+function node_body_validation_help($section): string {
   $output = '';
   switch ($section) {
     case 'admin/help#node_body_validation':
@@ -43,13 +43,13 @@ function _node_body_validation_add_constraint(array &$fields, EntityTypeInterfac
 /**
  * Implements hook_entity_base_field_info_alter().
  */
-function node_body_validation_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+function node_body_validation_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type): void {
   _node_body_validation_add_constraint($fields, $entity_type);
 }
 
 /**
  * Implements hook_entity_bundle_field_info_alter().
  */
-function node_body_validation_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+function node_body_validation_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type): void {
   _node_body_validation_add_constraint($fields, $entity_type);
 }
