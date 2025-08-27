@@ -1,0 +1,7 @@
+node_body_validation.admin_form:
+  path: /admin/config/content/node-body-validation
+  defaults:
+    _title: 'Node Body validation'
+    _form: \Drupal\node_body_validation\Form\NodeBodyValidationAdminForm
+  requirements:
+    _permission: 'node body validation admin control'

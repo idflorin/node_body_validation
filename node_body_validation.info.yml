@@ -1,0 +1,13 @@
+name: 'Node Body Validation'
+description: 'This module helps to validate node titles with min/max characters, Blacklist characters/words and unique node body.'
+version: 2.0.0
+package: Custom
+core_version_requirement: ^9 || ^10
+type: module
+
+configure: node_body_validation.admin_form
+
+# Information added by Drupal.org packaging script on 2020-11-17
+#version: '8.x-1.22'
+#project: 'node_title_validation'
+#datestamp: 1605654982

@@ -1,0 +1,55 @@
+<?php
+
+/**
+ * @file
+ * Node body validation module file.
+ */
+
+use Drupal\Core\Entity\EntityTypeInterface;
+
+/**
+ * Implements hook_help().
+ */
+function node_body_validation_help($section) {
+  $output = '';
+  switch ($section) {
+    case 'admin/help#node_body_validation':
+      $output = '<p>' . t('This module helps to validate node body with min/max characters,blacklist special characters,significant words and unique node body .') . '</p>';
+      $output .= '<p>' . t('Validate the node body By:') . '</p>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('Special Character & blacklisted words.') . '</li>';
+      $output .= '<li>' . t('Length (optionally specify min and/or max length.)') . '</li>';
+      $output .= '<li>' . t('Unique node body (for specific content type.)') . '</li>';
+      $output .= '</ul>';
+      break;
+  }
+  return $output;
+}
+
+/**
+ * Function for adding constraint.
+ *
+ * @param array $fields
+ *   The fields array.
+ * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+ *   The entity type.
+ */
+function _node_body_validation_add_constraint(array &$fields, EntityTypeInterface $entity_type) {
+  if ($entity_type->id() == 'node' && !empty($fields['body'])) {
+    $fields['body']->addConstraint('NodeBodyValidate', []);
+  }
+}
+
+/**
+ * Implements hook_entity_base_field_info_alter().
+ */
+function node_body_validation_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  _node_body_validation_add_constraint($fields, $entity_type);
+}
+
+/**
+ * Implements hook_entity_bundle_field_info_alter().
+ */
+function node_body_validation_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
+  _node_body_validation_add_constraint($fields, $entity_type);
+}
