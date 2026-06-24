@@ -7,8 +7,3 @@ version: 3.0.0
 configure: node_body_validation.admin_form
 dependencies:
   - drupal:node
-
-# Information added by Drupal.org packaging script on 2020-11-17
-#version: '8.x-1.22'
-#project: 'node_title_validation'
-#datestamp: 1605654982
