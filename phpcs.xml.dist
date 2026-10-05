@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<ruleset name="Node Body Validation">
+  <description>Drupal standards for a custom module with a maintained version.</description>
+  <file>.</file>
+  <arg name="extensions" value="php,install,module,yml"/>
+  <rule ref="Drupal">
+    <exclude name="Drupal.InfoFiles.AutoAddedKeys.Version"/>
+  </rule>
+  <rule ref="DrupalPractice"/>
+</ruleset>
