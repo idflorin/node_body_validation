@@ -63,3 +63,7 @@
 /drush
 /drupal.phar
 /drupal
+
+# Local test and coding-standard caches.
+/.phpunit.cache
+/.phpcs-cache

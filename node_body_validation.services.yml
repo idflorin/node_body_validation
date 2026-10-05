@@ -1,0 +1,10 @@
+services:
+  node_body_validation.text_analyzer:
+    class: Drupal\node_body_validation\Service\BodyTextAnalyzer
+
+  node_body_validation.settings_normalizer:
+    class: Drupal\node_body_validation\Service\SettingsNormalizer
+
+  node_body_validation.duplicate_checker:
+    class: Drupal\node_body_validation\Service\DuplicateBodyChecker
+    arguments: ['@entity_type.manager']

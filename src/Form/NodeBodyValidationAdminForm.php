@@ -1,45 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
+// web/modules/custom/node_body_validation/src/Form/NodeBodyValidationAdminForm.php.
 namespace Drupal\node_body_validation\Form;
 
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\node_body_validation\Service\SettingsNormalizer;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class NodeBodyValidationAdminForm.
- *
- * @package Drupal\node_body_validation\Form
+ * Configures optional body-validation rules for applicable content types.
  */
-class NodeBodyValidationAdminForm extends FormBase {
+final class NodeBodyValidationAdminForm extends ConfigFormBase {
 
-  /**
-   * The entity type manager.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManager
-   */
-  protected $entityTypeManager;
-
-  /**
-   * The config factory service.
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $configFactory;
-
-  /**
-   * Constructs a new NodeBodyValidationController.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   The entityTypeManager.
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The configFactory.
-   */
-  public function __construct( EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $config_factory) {
-    $this->entityTypeManager = $entityTypeManager;
-    $this->configFactory = $config_factory;
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    TypedConfigManagerInterface $typed_config_manager,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly EntityFieldManagerInterface $entityFieldManager,
+    private readonly SettingsNormalizer $normalizer,
+  ) {
+    parent::__construct($config_factory, $typed_config_manager);
   }
 
   /**
@@ -47,8 +34,11 @@ class NodeBodyValidationAdminForm extends FormBase {
    */
   public static function create(ContainerInterface $container): static {
     return new static(
+      $container->get('config.factory'),
+      $container->get('config.typed'),
       $container->get('entity_type.manager'),
-      $container->get('config.factory')
+      $container->get('entity_field.manager'),
+      $container->get('node_body_validation.settings_normalizer'),
     );
   }
 
@@ -62,141 +52,96 @@ class NodeBodyValidationAdminForm extends FormBase {
   /**
    * {@inheritdoc}
    */
+  protected function getEditableConfigNames(): array {
+    return ['node_body_validation.settings'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    // Get configuration value.
-    $node_body_validation_config = $this->config('node_body_validation.settings')->get('node_body_validation_config');
-
-    // Get available content types.
-    $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
-
-    // Variable to display 1st fieldset collapse open.
-    $i = 0;
-    // Generate fieldset for each content type along with exclude, min,
-    // max and unique form elements.
-    foreach ($node_types as $type) {
-
-      // Display First fieldset collapsed open.
-      if ($i == 0) {
-        $form[$type->get('type')] = [
-          '#type' => 'fieldset',
-          '#title' => $type->get('name'),
-          '#collapsible' => TRUE,
-          '#collapsed' => FALSE,
-        ];
-      }
-      else {
-        $form[$type->get('type')] = [
-          '#type' => 'fieldset',
-          '#title' => $type->get('name'),
-          '#collapsible' => TRUE,
-          '#collapsed' => TRUE,
-        ];
-      }
-      // Increment $i for other fieldsets in collapsed closed.
-      $i++;
-
-      $form[$type->get('type')]['exclude-' . $type->get('type')] = [
+    $config = $this->config('node_body_validation.settings');
+    $settings = $this->normalizer->normalize($config->get('node_body_validation_config'));
+    $form['description'] = [
+      '#markup' => '<p>' . $this->t('Character and word limits evaluate text without HTML markup. Leave a limit blank or enter 0 to disable it. Required field settings control whether authors must provide a body.') . '</p>',
+    ];
+    $form['content_types'] = ['#tree' => TRUE];
+    foreach ($this->bodyContentTypes() as $bundle => $type) {
+      $rules = $settings['content_types'][$bundle] ?? SettingsNormalizer::DEFAULT_RULES;
+      $form['content_types'][$bundle] = [
+        '#type' => 'details',
+        '#title' => $type->label(),
+        '#open' => FALSE,
+      ];
+      $form['content_types'][$bundle]['exclude'] = [
         '#type' => 'textarea',
-        '#default_value' => isset($node_body_validation_config['exclude-' . $type->get('type')]) ? $node_body_validation_config['exclude-' . $type->get('type')] : '',
-        '#title' => $this->t('Blacklist Characters/Words'),
-        '#description' => '<p>' . $this->t("Comma separated characters or words to avoided while saving node body. Ex: !,@,#,$,%,^,&,*,(,),1,2,3,4,5,6,7,8,9,0,have,has,were,aren't.") . '</p>' . '<p>' . $this->t('If any of the blacklisted characters/words found in node body,would return validation error on node save.') . '</p>',
+        '#title' => $this->t('Blocked characters, words, or phrases'),
+        '#default_value' => $rules['exclude'],
+        '#description' => $this->t('Separate entries with commas or new lines. Matching ignores letter case. Single characters match anywhere; words and phrases use whole-word boundaries.'),
       ];
-
-      $form[$type->get('type')]['comma-' . $type->get('type')] = [
+      $form['content_types'][$bundle]['comma'] = [
         '#type' => 'checkbox',
-        '#default_value' => isset($node_body_validation_config['comma-' . $type->get('type')]) ? $node_body_validation_config['comma-' . $type->get('type')] : '',
-        '#title' => $this->t('Add comma to blacklist.'),
+        '#title' => $this->t('Block commas'),
+        '#default_value' => $rules['comma'],
       ];
-
-      $form[$type->get('type')]['min-' . $type->get('type')] = [
-        '#type' => 'number',
-        '#title' => $this->t("Minimum characters"),
-        '#required' => TRUE,
-        '#description' => $this->t("Minimum number of characters node body should contain"),
-        '#max' => 9999,
-        '#min' => 1,
-        '#default_value' => isset($node_body_validation_config['min-' . $type->get('type')]) ? $node_body_validation_config['min-' . $type->get('type')] : 1,
-      ];
-
-      $form[$type->get('type')]['max-' . $type->get('type')] = [
-        '#type' => 'number',
-        '#title' => $this->t("Maximum characters"),
-        '#required' => TRUE,
-        '#description' => $this->t("Maximum number of characters node body should contain"),
-        '#max' => 99999,
-        '#min' => 1,
-        '#default_value' => isset($node_body_validation_config['max-' . $type->get('type')]) ? $node_body_validation_config['max-' . $type->get('type')] : 99999,
-      ];
-
-      $form[$type->get('type')]['min-wc-' . $type->get('type')] = [
-        '#type' => 'number',
-        '#title' => $this->t("Minimum Word Count"),
-        '#required' => TRUE,
-        '#description' => $this->t("Minimum number of words node body should contain"),
-        '#max' => 4999,
-        '#min' => 1,
-        '#default_value' => isset($node_body_validation_config['min-wc-' . $type->get('type')]) ? $node_body_validation_config['min-wc-' . $type->get('type')] : 1,
-      ];
-
-      $form[$type->get('type')]['max-wc-' . $type->get('type')] = [
-        '#type' => 'number',
-        '#title' => $this->t("Maximum Word Count"),
-        '#description' => $this->t("Maximum number of words node body should contain"),
-        '#max' => 4999,
-        '#min' => 1,
-        '#default_value' => isset($node_body_validation_config['max-wc-' . $type->get('type')]) ? $node_body_validation_config['max-wc-' . $type->get('type')] : 4999,
-      ];
-
-      $form[$type->get('type')]['unique-' . $type->get('type')] = [
+      foreach ([
+        'min' => $this->t('Minimum characters'),
+        'max' => $this->t('Maximum characters'),
+        'min-wc' => $this->t('Minimum words'),
+        'max-wc' => $this->t('Maximum words'),
+      ] as $key => $label) {
+        $form['content_types'][$bundle][$key] = [
+          '#type' => 'number',
+          '#title' => $label,
+          '#min' => 0,
+          '#step' => 1,
+          '#default_value' => $rules[$key] ?? '',
+        ];
+      }
+      $form['content_types'][$bundle]['unique'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t("Unique node body for @type content type", [
-          '@type' => $type->get('type'),
-        ]),
-        '#default_value' => isset($node_body_validation_config['unique-' . $type->get('type')]) ? $node_body_validation_config['unique-' . $type->get('type')] : 0,
+        '#title' => $this->t('Require a unique body within this content type'),
+        '#default_value' => $rules['unique'],
       ];
     }
-
+    if (count($form['content_types']) === 1) {
+      $form['empty'] = ['#markup' => '<p>' . $this->t('No content types currently have a supported body field.') . '</p>'];
+    }
     $form['unique'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Unique node body for all content types'),
-      '#default_value' => isset($node_body_validation_config['unique']) ? $node_body_validation_config['unique'] : 0,
+      '#title' => $this->t('Require a unique body across all content types'),
+      '#default_value' => $settings['unique'],
+      '#description' => $this->t('Check identical stored body values among nodes the validating account can access. This global rule takes precedence over content type uniqueness rules.'),
     ];
-
-    $form['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Save'),
+    $tags = $config->getCacheTags();
+    foreach (['node_type', 'field_config', 'field_storage_config'] as $entity_type) {
+      $tags = array_merge($tags, $this->entityTypeManager->getDefinition($entity_type)->getListCacheTags());
+    }
+    $form['#cache'] = [
+      'tags' => array_values(array_unique($tags)),
+      'contexts' => ['user.permissions', 'languages:language_interface'],
+      'max-age' => 0,
     ];
-    return $form;
+    return parent::buildForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-
-    // Get available content types.
-    $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
-
-    // Loop for each content type & validate min, max values.
-    foreach ($node_types as $type) {
-      // Get max characters count.
-      $max = $form_state->getValue(['max-' . $type->get('type')]);
-      // Get min characters count.
-      $min = $form_state->getValue(['min-' . $type->get('type')]);
-
-      // Validate min is less than max value.
-      if ($min > $max) {
-        $form_state->setErrorByName('min-' . $type->get('type'), $this->t("Minimum length should not be more than Max length"));
+    parent::validateForm($form, $form_state);
+    foreach ($this->bodyContentTypes() as $bundle => $type) {
+      $rules = $form_state->getValue(['content_types', $bundle], []);
+      foreach (['min', 'max', 'min-wc', 'max-wc'] as $key) {
+        $value = $rules[$key] ?? NULL;
+        if ($value !== NULL && $value !== '' && (filter_var($value, FILTER_VALIDATE_INT) === FALSE || (int) $value < 0)) {
+          $form_state->setErrorByName('content_types][' . $bundle . '][' . $key, $this->t('Enter a non-negative whole number.'));
+        }
       }
-
-      // Get min word count.
-      $min_wc = $form_state->getValue('min-wc-' . $type->get('type'));
-      // Get max word count.
-      $max_wc = $form_state->getValue(['max-wc-' . $type->get('type')]);
-
-      // Validate min is less than max value.
-      if (!empty($min_wc) && !empty($max_wc) && $min_wc > $max_wc) {
-        $form_state->setErrorByName('max-wc-' . $type->get('type'), $this->t("Minimum word count of body should not be more than Maximum word count"));
+      foreach (['min' => 'max', 'min-wc' => 'max-wc'] as $min => $max) {
+        if (($rules[$min] ?? 0) > 0 && ($rules[$max] ?? 0) > 0 && $rules[$min] > $rules[$max]) {
+          $form_state->setErrorByName('content_types][' . $bundle . '][' . $min, $this->t('The minimum must not exceed the maximum.'));
+        }
       }
     }
   }
@@ -205,27 +150,30 @@ class NodeBodyValidationAdminForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $values = [];
-    // Get available content types.
-    $node_types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
-    // Store Form values in node_body_validation_config variable.
-    foreach ($node_types as $type) {
-      $values['comma-' . $type->get('type')] = $form_state->getValue(['comma-' . $type->get('type')]);
-      $values['exclude-' . $type->get('type')] = $form_state->getValue(['exclude-' . $type->get('type')]);
-      $values['min-' . $type->get('type')] = $form_state->getValue(['min-' . $type->get('type')]);
-      $values['max-' . $type->get('type')] = $form_state->getValue(['max-' . $type->get('type')]);
-      $values['min-wc-' . $type->get('type')] = $form_state->getValue(['min-wc-' . $type->get('type')]);
-      $values['max-wc-' . $type->get('type')] = $form_state->getValue(['max-wc-' . $type->get('type')]);
-      $values['unique-' . $type->get('type')] = $form_state->getValue(['unique-' . $type->get('type')]);
+    $config = $this->config('node_body_validation.settings');
+    $settings = $this->normalizer->normalize($config->get('node_body_validation_config'));
+    foreach ($this->bodyContentTypes() as $bundle => $type) {
+      $settings['content_types'][$bundle] = $this->normalizer->normalizeRules(
+        $form_state->getValue(['content_types', $bundle], []),
+      );
     }
-    $values['unique'] = $form_state->getValue(['unique']);
+    $settings['unique'] = (bool) $form_state->getValue('unique', FALSE);
+    $config->set('node_body_validation_config', $this->normalizer->normalize($settings))->save();
+    parent::submitForm($form, $form_state);
+  }
 
-    // Set node_body_validation_config variable.
-    $this->configFactory->getEditable('node_body_validation.settings')
-      ->set('node_body_validation_config', $values)
-      ->save();
-
-    $this->messenger()->addMessage($this->t('Node Body Validation Configurations saved successfully!'));
+  /**
+   * Returns content types that currently have a supported body field.
+   */
+  private function bodyContentTypes(): array {
+    $types = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+    foreach ($types as $bundle => $type) {
+      $fields = $this->entityFieldManager->getFieldDefinitions('node', $bundle);
+      if (!isset($fields['body']) || !in_array($fields['body']->getType(), ['text', 'text_long', 'text_with_summary'], TRUE)) {
+        unset($types[$bundle]);
+      }
+    }
+    return $types;
   }
 
 }
