@@ -1,0 +1,7 @@
+node_body_validation.settings:
+  type: config_object
+  label: 'Node body validation settings'
+  mapping:
+    node_body_validation_config:
+      type: ignore
+      label: 'Validation rules, keyed by rule and content type'

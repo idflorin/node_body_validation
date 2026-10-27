@@ -1,0 +1,9 @@
+{
+  "name": "idflorin/node_body_validation",
+  "description": "Adds body validation. I based on https://www.drupal.org/project/node_title_validation 2.0.1",
+  "type": "drupal-custom-module",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "drupal/core": "^11.1"
+  }
+}

@@ -1,0 +1,5 @@
+node_body_validation.admin_form:
+  route_name: node_body_validation.admin_form
+  title: 'Node Body validation'
+  description: 'Validating node body'
+  parent: system.admin_config_content

@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Install and update hooks for Node Body Validation.
+ */
+
+/**
+ * Moves settings from the old config name to node_body_validation.settings.
+ */
+function node_body_validation_update_10301(): void {
+  $factory = \Drupal::configFactory();
+  $old = $factory->getEditable('node_body_validation.node_body_validation_settings');
+  if ($old->isNew()) {
+    return;
+  }
+  $value = $old->get('node_body_validation_config');
+  $new = $factory->getEditable('node_body_validation.settings');
+  if (empty($new->get('node_body_validation_config')) && !empty($value)) {
+    $new->set('node_body_validation_config', $value)->save();
+  }
+  $old->delete();
+}

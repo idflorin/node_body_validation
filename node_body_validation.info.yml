@@ -1,0 +1,9 @@
+name: 'Node Body Validation'
+description: 'Validates the node body: min/max characters and words, blacklisted characters/words and unique body.'
+package: Custom
+type: module
+core_version_requirement: ^11.1
+configure: node_body_validation.admin_form
+dependencies:
+  - drupal:node
+version: '1.0.0'
