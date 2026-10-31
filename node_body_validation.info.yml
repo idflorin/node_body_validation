@@ -6,4 +6,4 @@ core_version_requirement: ^11.1
 configure: node_body_validation.admin_form
 dependencies:
   - drupal:node
-version: '3.0.2'
+version: '3.1.0'
