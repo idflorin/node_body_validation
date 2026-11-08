@@ -17,7 +17,7 @@ class NodeBodyValidationAdminForm extends FormBase {
     protected EntityTypeManagerInterface $entityTypeManager,
     ConfigFactoryInterface $configFactory,
   ) {
-    parent::__construct($configFactory);
+    $this->configFactory = $configFactory;
   }
 
   /**
