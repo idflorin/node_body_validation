@@ -68,20 +68,6 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
     $text = $this->toPlainText($value_body);
     $has_body = trim($text) !== '';
 
-    // Blacklisted characters / words.
-    $exclude = $this->parseBlacklist((string) ($config['exclude-' . $type] ?? ''));
-    if (!empty($config['comma-' . $type])) {
-      $exclude[] = ',';
-    }
-    if ($exclude) {
-      $findings = $this->findExcluded($text, $exclude);
-      if ($findings) {
-        $this->context->addViolation((string) $this->t('These characters/words are not permitted in the body: @findings', [
-          '@findings' => implode(' ', $findings),
-        ]));
-      }
-    }
-
     // Character count.
     $length = mb_strlen($text);
     $min = $this->limit($config, 'min-' . $type);
@@ -146,38 +132,6 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
     $text = Html::decodeEntities(strip_tags($html));
     $text = str_replace("\xC2\xA0", ' ', $text);
     return trim(preg_replace('/\s+/u', ' ', $text) ?? '');
-  }
-
-  /**
-   * Splits the blacklist textarea into lowercase, unique entries.
-   */
-  protected function parseBlacklist(string $raw): array {
-    $items = preg_split('/[,\r\n]+/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-    $items = array_map(fn($item) => mb_strtolower(trim($item)), $items);
-    return array_values(array_unique(array_filter($items, fn($item) => $item !== '')));
-  }
-
-  /**
-   * Returns the blacklist entries present in the text, quoted for display.
-   */
-  protected function findExcluded(string $text, array $exclude): array {
-    $lower = mb_strtolower($text);
-    $findings = [];
-    foreach ($exclude as $item) {
-      if (mb_strlen($item) === 1) {
-        $found = mb_strpos($lower, $item) !== FALSE;
-      }
-      else {
-        // Whole-word match, so "have" does not match "haven" but does match
-        // "have," or "have.".
-        $pattern = '/(?<![\p{L}\p{N}_])' . preg_quote($item, '/') . '(?![\p{L}\p{N}_])/u';
-        $found = (bool) preg_match($pattern, $lower);
-      }
-      if ($found) {
-        $findings[] = '"' . $item . '"';
-      }
-    }
-    return $findings;
   }
 
   /**

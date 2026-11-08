@@ -54,17 +54,6 @@ class NodeBodyValidationAdminForm extends FormBase {
         '#open' => TRUE,
       ];
 
-      $form['types'][$id]['exclude-' . $id] = [
-        '#type' => 'textarea',
-        '#title' => $this->t('Blacklist characters/words'),
-        '#default_value' => $config['exclude-' . $id] ?? '',
-        '#description' => $this->t("Comma or line separated characters or words that are not allowed in the body. Example: !,@,#,have,has,aren't. Matching ignores case; words match whole words only."),
-      ];
-      $form['types'][$id]['comma-' . $id] = [
-        '#type' => 'checkbox',
-        '#title' => $this->t('Add comma to blacklist.'),
-        '#default_value' => $config['comma-' . $id] ?? 0,
-      ];
       $form['types'][$id]['min-' . $id] = [
         '#type' => 'number',
         '#title' => $this->t('Minimum characters'),
@@ -144,8 +133,6 @@ class NodeBodyValidationAdminForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $values = [];
     foreach (array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple()) as $id) {
-      $values['comma-' . $id] = (int) $form_state->getValue('comma-' . $id);
-      $values['exclude-' . $id] = trim((string) $form_state->getValue('exclude-' . $id));
       $values['min-' . $id] = $form_state->getValue('min-' . $id);
       $values['max-' . $id] = $form_state->getValue('max-' . $id);
       $values['min-wc-' . $id] = $form_state->getValue('min-wc-' . $id);
