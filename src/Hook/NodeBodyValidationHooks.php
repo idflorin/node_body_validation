@@ -22,9 +22,10 @@ class NodeBodyValidationHooks {
     if ($route_name !== 'help.page.node_body_validation') {
       return NULL;
     }
-    $output = '<p>' . $this->t('Validates the node body with minimum/maximum character and word counts and unique body values.') . '</p>';
+    $output = '<p>' . $this->t('Validates the node body with minimum/maximum character and word counts, blacklisted characters and words, and unique body values.') . '</p>';
     $output .= '<p>' . $this->t('Validate the node body by:') . '</p>';
     $output .= '<ul>';
+    $output .= '<li>' . $this->t('Blacklisted characters and words.') . '</li>';
     $output .= '<li>' . $this->t('Length (minimum and maximum characters and words).') . '</li>';
     $output .= '<li>' . $this->t('Unique node body (per content type or across all).') . '</li>';
     $output .= '</ul>';

@@ -1,8 +1,11 @@
 # Node Body Validation
 
-The **Node Body Validation** module helps site builders enforce body field validation rules for nodes. It ensures consistency in content entry by restricting length and validating uniqueness across content types.
+The **Node Body Validation** module helps site builders enforce body field validation rules for nodes. It ensures consistency in content entry by restricting length, filtering characters or words, and validating uniqueness across content types.
 
 ## Features
+
+* **Blacklist characters/words**
+  Prevent authors from saving content with disallowed characters or words in the body.
 
 * **Length restrictions**
   Define minimum and maximum character counts.
@@ -40,6 +43,7 @@ The **Node Body Validation** module helps site builders enforce body field valid
 1. Go to **Configuration → Content authoring → Node body validation**.
 2. For each content type, set:
 
+   * Blacklisted characters/words
    * Minimum/maximum characters
    * Minimum/maximum word count
    * Uniqueness rules
