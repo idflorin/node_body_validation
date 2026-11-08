@@ -46,15 +46,13 @@ class NodeBodyValidationAdminForm extends FormBase {
 
     $form['types'] = ['#type' => 'container'];
 
-    $first = TRUE;
     foreach ($this->entityTypeManager->getStorage('node_type')->loadMultiple() as $type) {
       $id = $type->id();
       $form['types'][$id] = [
         '#type' => 'details',
         '#title' => $type->label(),
-        '#open' => $first,
+        '#open' => TRUE,
       ];
-      $first = FALSE;
 
       $form['types'][$id]['exclude-' . $id] = [
         '#type' => 'textarea',
