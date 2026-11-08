@@ -45,12 +45,12 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
   public function validate(mixed $items, Constraint $constraint): void {
     /** @var \Drupal\Core\Field\FieldItemListInterface $items */
     if ($items->isEmpty()) {
-      return;
+      $value_body = '';
     }
-    $value_body = (string) $items->value;
-    if (trim($value_body) === '') {
-      return;
+    else {
+      $value_body = (string) $items->value;
     }
+    $has_body = trim($value_body) !== '';
 
     $node = $items->getEntity();
     if (!$node instanceof NodeInterface) {
@@ -108,7 +108,7 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
     // Uniqueness.
     $unique_all = !empty($config['unique']);
     $unique_type = !empty($config['unique-' . $type]);
-    if ($unique_all || $unique_type) {
+    if (($unique_all || $unique_type) && $has_body) {
       $query = $this->entityTypeManager->getStorage('node')->getQuery()
         ->accessCheck(FALSE)
         ->condition($items->getFieldDefinition()->getName() . '.value', $value_body);

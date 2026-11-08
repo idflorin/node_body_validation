@@ -10,6 +10,7 @@ The **Node Body Validation** module helps site builders enforce body field valid
 * **Length restrictions**
   Define minimum and maximum character counts.
   Define minimum and maximum word counts.
+  Configured minimums also apply to empty or whitespace-only bodies.
 
 * **Unique validation**
   Enforce unique node body values per content type or across all content types.
