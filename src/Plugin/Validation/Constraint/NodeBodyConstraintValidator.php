@@ -50,7 +50,6 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
     else {
       $value_body = (string) $items->value;
     }
-    $has_body = trim($value_body) !== '';
 
     $node = $items->getEntity();
     if (!$node instanceof NodeInterface) {
@@ -67,6 +66,7 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
 
     // All rules work on the visible text, not on the stored HTML.
     $text = $this->toPlainText($value_body);
+    $has_body = trim($text) !== '';
 
     // Blacklisted characters / words.
     $exclude = $this->parseBlacklist((string) ($config['exclude-' . $type] ?? ''));
@@ -105,24 +105,34 @@ class NodeBodyConstraintValidator extends ConstraintValidator implements Contain
       $this->context->addViolation((string) $this->t('Body should not exceed a word count of @count.', ['@count' => $max_wc]));
     }
 
-    // Uniqueness.
+    // Uniqueness checks must compare the visible text, not the raw HTML stored
+    // in the body field.
     $unique_all = !empty($config['unique']);
     $unique_type = !empty($config['unique-' . $type]);
     if (($unique_all || $unique_type) && $has_body) {
       $query = $this->entityTypeManager->getStorage('node')->getQuery()
-        ->accessCheck(FALSE)
-        ->condition($items->getFieldDefinition()->getName() . '.value', $value_body);
+        ->accessCheck(FALSE);
       if (!$unique_all) {
         $query->condition('type', $type);
       }
       if (!$node->isNew()) {
         $query->condition('nid', $node->id(), '<>');
       }
-      $ids = $query->range(0, 1)->execute();
-      if ($ids) {
-        $this->context->addViolation((string) $this->t('The body must be unique. Content item @id already uses the same body.', [
-          '@id' => reset($ids),
-        ]));
+
+      $candidate_ids = $query->execute();
+      foreach ($candidate_ids as $candidate_id) {
+        $candidate = $this->entityTypeManager->getStorage('node')->load($candidate_id);
+        if (!$candidate instanceof NodeInterface) {
+          continue;
+        }
+
+        $candidate_body = $candidate->get($items->getFieldDefinition()->getName())->value;
+        if ($this->toPlainText((string) $candidate_body) === $text) {
+          $this->context->addViolation((string) $this->t('The body must be unique. Content item @id already uses the same body.', [
+            '@id' => $candidate_id,
+          ]));
+          break;
+        }
       }
     }
   }
